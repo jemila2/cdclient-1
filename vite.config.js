@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: '/cdclient-1/', 
+  base: '/cdclient-1/', // Make sure this matches your GitHub repo name
   plugins: [
     react(),
   ],
@@ -17,7 +17,7 @@ export default defineConfig({
     port: 5173,
   },
   build: {
-    outDir: 'public',
+    outDir: 'dist',
     assetsDir: 'assets',
     emptyOutDir: true,
     sourcemap: false,
