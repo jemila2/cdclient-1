@@ -1,17 +1,20 @@
-
-
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
+import tailwindcss from '@tailwindcss/postcss';
+import autoprefixer from 'autoprefixer';
+
 export default defineConfig({
-  base: '/cdclient-1/', // Make sure this matches your GitHub repo name
+  base: '/cdclient-1/',
   plugins: [
     react(),
-    tailwindcss(),
   ],
   css: {
-    postcss: './postcss.config.js',
+    postcss: {
+      plugins: [
+        tailwindcss(),
+        autoprefixer(),
+      ],
+    },
   },
   server: {
     host: '0.0.0.0',
