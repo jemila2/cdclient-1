@@ -15,8 +15,8 @@ const AdminRegistrationForm = ({ onSuccess }) => {
 
   const apiRequest = async (endpoint, options = {}) => {
     // Use the same base URL as your AuthContext
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://backend-21-2fu1.onrender.com';
-    const url = `${API_BASE_URL}/api${endpoint}`;
+    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://backend-21-2fu1.onrender.com';
+    const url = `${VITE_API_BASE_URL}/api${endpoint}`;
     
     // Default configuration
     const defaultConfig = {
@@ -236,5 +236,6 @@ const AdminRegistrationForm = ({ onSuccess }) => {
 };
 
 export default AdminRegistrationForm;
+
 
 
