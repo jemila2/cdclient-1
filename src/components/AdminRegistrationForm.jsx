@@ -236,5 +236,3 @@ const AdminRegistrationForm = ({ onSuccess }) => {
 };
 
 export default AdminRegistrationForm;
-
-
