@@ -15,7 +15,6 @@ const AdminRegistrationForm = ({ onSuccess }) => {
   const [adminExists, setAdminExists] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   
-
 useEffect(() => {
   const checkAdminExists = async () => {
     try {
@@ -23,11 +22,14 @@ useEffect(() => {
       setAdminExists(response.data.adminExists);
     } catch (error) {
       console.error('Error checking admin existence:', error);
-      // If we get a 404, the route might not exist yet, but we can assume no admin
-      if (error.response?.status === 404) {
+      
+      // Handle 401 (Unauthorized) and 404 (Not Found) errors
+      if ([401, 404].includes(error.response?.status)) {
+        // If we get 401/404, assume no admin exists yet
         setAdminExists(false);
+        toast.info('No admin account found. You can create the first admin account.');
       } else {
-        toast.error('Failed to check admin status');
+        toast.error('Failed to check admin status. Please try again.');
       }
     } finally {
       setCheckingAdmin(false);
@@ -222,5 +224,6 @@ useEffect(() => {
     </div>
   );
 };
+
 
 export default AdminRegistrationForm;
