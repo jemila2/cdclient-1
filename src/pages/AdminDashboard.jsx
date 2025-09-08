@@ -102,7 +102,7 @@ const AdminDashboard = () => {
 
 const handleEmployeeRequest = async (requestId, status) => {
   try {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+    const API_BASE_URL = import.meta.env.API_BASE_URL || 'http://localhost:1000/api';
     
     const response = await fetch(`${API_BASE_URL}/employee-requests/${requestId}`, {
       method: 'PUT',
@@ -128,7 +128,7 @@ const handleEmployeeRequest = async (requestId, status) => {
 
   const fetchEmployeeRequests = async () => {
   try {
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+    const API_BASE_URL = import.meta.env.API_BASE_URL || 'http://localhost:3001/api';
     const response = await fetch(`${API_BASE_URL}/employee-requests`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -1004,4 +1004,5 @@ const EmployeeRequestTable = ({ requests, onApprove, onReject }) => {
     </div>
   );
 };
+
 export default AdminDashboard;
