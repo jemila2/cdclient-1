@@ -1,10 +1,10 @@
 
-if (typeof window.VITE_API_BASE_URL === 'undefined') {
-  window.VITE_API_BASE_URL = 'https://backend-21-2fu1.onrender.com';
-}
-if (typeof window.API_BASE_URL === 'undefined') {
-  window.API_BASE_URL = 'https://backend-21-2fu1.onrender.com';
-}
+// if (typeof window.VITE_API_BASE_URL === 'undefined') {
+//   window.VITE_API_BASE_URL = 'https://backend-21-2fu1.onrender.com';
+// }
+// if (typeof window.API_BASE_URL === 'undefined') {
+//   window.API_BASE_URL = 'https://backend-21-2fu1.onrender.com';
+
 
 // Your existing React imports
 import React from 'react';
