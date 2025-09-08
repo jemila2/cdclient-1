@@ -16,28 +16,39 @@ export function AuthProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   
-  // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://backend-21-2fu1.onrender.com';
   const API_BASE_URL = 'https://backend-21-2fu1.onrender.com';
   const api = axios.create({
     baseURL: `${API_BASE_URL}/api`,
-    timeout: 30000, // Increased timeout for Render cold starts
+    timeout: 30000,
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     }
   });
 
-// In your AuthContext, simplify the interceptors:
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+  // Request interceptor
+  api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
 
-
-
+  // Response interceptor to handle auth errors
+  api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+  );
 
   const loadUser = async () => {
     try {
@@ -512,6 +523,7 @@ export const useAuth = () => {
   }
   return context;
 };
+
 
 
 
