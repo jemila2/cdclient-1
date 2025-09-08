@@ -1,4 +1,5 @@
 
+
 // TEMPORARY FIX - Add this at the VERY TOP of your React entry file
 if (typeof import.meta === 'undefined') {
   window.import = { meta: { env: {} } };
@@ -40,3 +41,4 @@ try {
     </div>
   `;
 }
+

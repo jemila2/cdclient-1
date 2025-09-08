@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 
@@ -16,50 +15,36 @@ export function AuthProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   
-  // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://backend-21-2fu1.onrender.com';
   const API_BASE_URL = 'https://backend-21-2fu1.onrender.com';
   const api = axios.create({
     baseURL: `${API_BASE_URL}/api`,
-    timeout: 15000, // Increased timeout for Render cold starts
+    timeout: 30000,
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     }
   });
 
-// In your AuthContext, simplify the interceptors:
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+  // Request interceptor
+  api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
 
-
+  // Response interceptor to handle auth errors
   api.interceptors.response.use(
-    response => response,
-    async error => {
-      const originalRequest = error.config;
-      
-      // Handle 401 errors (unauthorized)
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        
-        try {
-          const response = await api.post('/auth/refresh');
-          const newToken = response.data.token;
-          
-          localStorage.setItem('token', newToken);
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          
-          return api(originalRequest);
-        } catch (refreshError) {
-          logout();
-          return Promise.reject(refreshError);
-        }
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        window.location.href = '/login';
       }
-      
       return Promise.reject(error);
     }
   );
@@ -95,7 +80,6 @@ api.interceptors.request.use((config) => {
     }
   };
 
-  // FIXED: Removed merge conflict and simplified login
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });

@@ -2,7 +2,11 @@
 // export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://backend-21-2fu1.onrender.com';
 
 import axios from 'axios';
+<<<<<<< HEAD
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10000';
+=======
+const API_BASE_URL = import.meta.env.API_BASE_URL || 'http://localhost:10000';
+>>>>>>> 9b1b65c0da8f66c2c438034f83def209f09cf975
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -195,3 +199,7 @@ export default api;
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9b1b65c0da8f66c2c438034f83def209f09cf975
