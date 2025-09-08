@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
 const AdminRegistrationForm = ({ onSuccess }) => {
-  const { login, api } = useAuth(); // Use the api from your AuthContext
+  const { login, api } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,30 +14,48 @@ const AdminRegistrationForm = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [adminExists, setAdminExists] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
-  
-useEffect(() => {
-  const checkAdminExists = async () => {
-    try {
-      const response = await api.get('/admin/admin-exists');
-      setAdminExists(response.data.adminExists);
-    } catch (error) {
-      console.error('Error checking admin existence:', error);
-      
-      // Handle 401 (Unauthorized) and 404 (Not Found) errors
-      if ([401, 404].includes(error.response?.status)) {
-        // If we get 401/404, assume no admin exists yet
-        setAdminExists(false);
-        toast.info('No admin account found. You can create the first admin account.');
-      } else {
-        toast.error('Failed to check admin status. Please try again.');
-      }
-    } finally {
-      setCheckingAdmin(false);
-    }
-  };
 
-  checkAdminExists();
-}, [api]);
+  useEffect(() => {
+    const checkAdminExists = async () => {
+      try {
+        console.log('Checking if admin exists...');
+        const response = await api.get('/admin/admin-exists', {
+          timeout: 10000 // 10 second timeout
+        });
+        setAdminExists(response.data.adminExists);
+        console.log('Admin exists:', response.data.adminExists);
+      } catch (error) {
+        console.error('Error checking admin existence:', error);
+        
+        // Handle different error scenarios
+        if (error.code === 'ECONNABORTED') {
+          // Timeout error - backend is slow
+          console.log('Backend timeout, assuming no admin exists');
+          setAdminExists(false);
+          toast.info('Backend is slow to respond. You can try creating an admin account.');
+        } else if ([401, 404].includes(error.response?.status)) {
+          // 401/404 errors - assume no admin exists
+          console.log('401/404 error, assuming no admin exists');
+          setAdminExists(false);
+          toast.info('No admin account found. You can create the first admin account.');
+        } else {
+          // Other errors
+          console.log('Other error, assuming no admin exists');
+          setAdminExists(false);
+          toast.error('Could not verify admin status. You can try creating an admin account.');
+        }
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+
+    // Add a small delay before checking to avoid immediate errors
+    const timer = setTimeout(() => {
+      checkAdminExists();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [api]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,12 +76,14 @@ useEffect(() => {
     }
 
     try {
-      // ✅ Use the correct endpoint
+      console.log('Attempting to create admin account...');
       const response = await api.post('/admin/register-admin', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
         secretKey: formData.secretKey
+      }, {
+        timeout: 30000 // 30 second timeout for registration
       });
 
       toast.success('Admin account created successfully!');
@@ -71,8 +91,10 @@ useEffect(() => {
       // Log in the new admin
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        // You might need to adjust this based on your login function
-        await login(response.data.user.email, formData.password);
+        // Use the login function but don't await it to avoid blocking
+        login(response.data.user.email, formData.password)
+          .then(() => console.log('Admin logged in successfully'))
+          .catch(err => console.error('Login error:', err));
       }
       
       // Reset form
@@ -99,8 +121,10 @@ useEffect(() => {
         toast.error('Invalid admin secret key.');
       } else if (error.response?.data?.status === 'user_exists') {
         toast.error('User already exists with this email.');
+      } else if (error.code === 'ECONNABORTED') {
+        toast.error('Request timeout. The backend is taking too long to respond.');
       } else {
-        toast.error(error.response?.data?.error || 'Failed to create admin account');
+        toast.error(error.response?.data?.error || 'Failed to create admin account. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -114,11 +138,15 @@ useEffect(() => {
     });
   };
 
-  // ✅ Show message if admin already exists
+  // Show message if admin already exists
   if (checkingAdmin) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
-        <p className="text-center">Checking admin status...</p>
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-300 rounded w-3/4 mx-auto mb-4"></div>
+          <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto"></div>
+        </div>
+        <p className="text-center text-gray-600 mt-4">Checking admin status...</p>
       </div>
     );
   }
@@ -133,6 +161,14 @@ useEffect(() => {
         <p className="text-sm text-gray-500 text-center mt-4">
           Please use the existing admin account to manage the system.
         </p>
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            Refresh Page
+          </button>
+        </div>
       </div>
     );
   }
@@ -155,6 +191,7 @@ useEffect(() => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded mt-1"
             placeholder="Enter admin full name"
+            disabled={loading}
           />
         </div>
         
@@ -168,6 +205,7 @@ useEffect(() => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded mt-1"
             placeholder="Enter admin email address"
+            disabled={loading}
           />
         </div>
         
@@ -182,6 +220,7 @@ useEffect(() => {
             className="w-full p-2 border border-gray-300 rounded mt-1"
             placeholder="Create a strong password"
             minLength="6"
+            disabled={loading}
           />
         </div>
         
@@ -196,6 +235,7 @@ useEffect(() => {
             className="w-full p-2 border border-gray-300 rounded mt-1"
             placeholder="Confirm your password"
             minLength="6"
+            disabled={loading}
           />
         </div>
         
@@ -209,6 +249,7 @@ useEffect(() => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded mt-1"
             placeholder="Enter the admin setup key"
+            disabled={loading}
           />
           <p className="text-xs text-gray-500 mt-1">Hint: ADMIN_SETUP_2024</p>
         </div>
@@ -216,7 +257,7 @@ useEffect(() => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {loading ? 'Creating Admin Account...' : 'Create Admin Account'}
         </button>
@@ -224,6 +265,5 @@ useEffect(() => {
     </div>
   );
 };
-
 
 export default AdminRegistrationForm;
