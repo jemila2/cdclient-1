@@ -345,18 +345,64 @@
 
 // export default  export default AdminRegistrationForm;;
 
-
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const AdminRegistrationForm = ({ onSuccess }) => {
-  const { api } = useAuth();
+  const { api, user, isAdmin, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', confirmPassword: '', secretKey: ''
   });
   const [loading, setLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Redirect if user is already admin
+  useEffect(() => {
+    if (!authLoading) {
+      if (user && isAdmin()) {
+        // User is already an admin, redirect to dashboard
+        toast.info('You are already an administrator. Redirecting to dashboard...');
+        navigate('/dashboard');
+      } else {
+        setIsChecking(false);
+      }
+    }
+  }, [user, isAdmin, authLoading, navigate]);
+
+  // Show loading while checking auth status
+  if (authLoading || isChecking) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is logged in but not admin, show message
+  if (user && !isAdmin()) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
+        <h3 className="text-xl font-bold mb-4 text-center text-red-600">Access Denied</h3>
+        <p className="text-gray-600 text-center mb-4">
+          You are logged in as a {user.role}, but admin access is required to create new admin accounts.
+        </p>
+        <div className="text-center">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -386,14 +432,25 @@ const AdminRegistrationForm = ({ onSuccess }) => {
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        // Force page reload to update auth state
+        window.location.reload();
       }
       
       setFormData({ name: '', email: '', password: '', confirmPassword: '', secretKey: '' });
+      
       if (onSuccess) onSuccess();
 
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.response?.data?.error || 'Failed to create admin account');
+      
+      // Handle specific error cases
+      if (error.response?.data?.status === 'admin_exists') {
+        toast.error('Admin account already exists. Only one admin is allowed.');
+      } else if (error.response?.data?.status === 'user_exists') {
+        toast.error('User already exists with this email.');
+      } else {
+        toast.error(error.response?.data?.error || 'Failed to create admin account. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -405,7 +462,10 @@ const AdminRegistrationForm = ({ onSuccess }) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto">
-      <h3 className="text-xl font-bold mb-4 text-center">Admin Setup</h3>
+      <h3 className="text-xl font-bold mb-4 text-center">Initial Admin Setup</h3>
+      <p className="text-gray-600 mb-4 text-center text-sm">
+        Create the first and only admin account for your application
+      </p>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -494,5 +554,3 @@ const AdminRegistrationForm = ({ onSuccess }) => {
 };
 
 export default AdminRegistrationForm;
-
-
