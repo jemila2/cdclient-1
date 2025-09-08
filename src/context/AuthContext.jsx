@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
   const API_BASE_URL = 'https://backend-21-2fu1.onrender.com';
   const api = axios.create({
     baseURL: `${API_BASE_URL}/api`,
-    timeout: 15000, // Increased timeout for Render cold starts
+    timeout: 30000, // Increased timeout for Render cold starts
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json'
@@ -38,32 +38,7 @@ export function AuthProvider({ children }) {
     return Promise.reject(error);
   });
 
-  // api.interceptors.response.use(
-  //   response => response,
-  //   async error => {
-  //     const originalRequest = error.config;
-      
-  //     // Handle 401 errors (unauthorized)
-  //     if (error.response?.status === 401 && !originalRequest._retry) {
-  //       originalRequest._retry = true;
-        
-  //       try {
-  //         const response = await api.post('/auth/refresh');
-  //         const newToken = response.data.token;
-          
-  //         localStorage.setItem('token', newToken);
-  //         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          
-  //         return api(originalRequest);
-  //       } catch (refreshError) {
-  //         logout();
-  //         return Promise.reject(refreshError);
-  //       }
-  //     }
-      
-  //     return Promise.reject(error);
-  //   }
-  // );
+
 
   const loadUser = async () => {
     try {
@@ -538,4 +513,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
 
